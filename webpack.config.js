@@ -4,7 +4,7 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
   entry: [
-    './src/js/index.js',
+    './src/js/index.ts',
     './src/scss/style.scss'
   ],
   output: {
@@ -14,20 +14,25 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.js$/,
-        include: path.resolve(__dirname, 'src/js'),
-        use: {
-          loader: 'babel-loader',
-          options: {
-            presets: [
-              ['@babel/preset-env', {
-                modules: false
-              }],
-            ],
-            plugins: ['@babel/plugin-proposal-class-properties'],
-          }
-        }
+        test: /\.tsx?$/,
+        use: 'ts-loader',
+        exclude: /node_modules/
       },
+      // {
+      //   test: /\.js$/,
+      //   include: path.resolve(__dirname, 'src/js'),
+      //   use: {
+      //     loader: 'babel-loader',
+      //     options: {
+      //       presets: [
+      //         ['@babel/preset-env', {
+      //           modules: false
+      //         }],
+      //       ],
+      //       plugins: ['@babel/plugin-proposal-class-properties'],
+      //     }
+      //   }
+      // },
       {
         test: /\.(sass|scss)$/,
         include: path.resolve(__dirname, 'src/scss'),
