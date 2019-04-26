@@ -36,13 +36,33 @@ class GameObject {
     this.y = y;
 
     this.element.style.left = (this.x - this.width / 2) + 'px';
-    this.element.style.bottom = (this.y - this.height / 2) + 'px';
+    this.element.style.top = (this.y - this.height / 2) + 'px';
+  }
+
+  lookOn(x: number, y: number) {
+    var diffX = this.x - x;
+    var diffY = this.y - y;
+    var tan = diffY / diffX;
+
+    var atan = Math.atan(tan)* 180 / Math.PI;
+    if(diffY >= 0 && diffX >= 0) {
+      atan += 180;
+    }
+    else if(diffY <= 0 && diffX >= 0) {
+      atan -= 180;
+    }
+
+    this.element.style.transform = `rotate(${atan}deg)`;
   }
 }
 
 class Archer extends GameObject{
   constructor(gameObjectParams: GameObjectParams) {
     super(gameObjectParams);
+
+    document.addEventListener('mousemove', (e) => {
+      this.lookOn(e.clientX, e.clientY);
+    });
 
     this.element.style.background = `url(data:image/png;base64,${getArcherImageBase64()})`;
   }
