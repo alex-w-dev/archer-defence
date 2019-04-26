@@ -1,29 +1,98 @@
 interface GameParams {
+  gameWindowWidth: number;
+  gameWindowHeight: number;
+}
+
+interface GameObjectParams {
+  game: Game;
   width: number;
   height: number;
-  fieldParent?: HTMLElement;
+  x?: number;
+  y?: number;
+}
+
+class GameObject {
+  element: HTMLDivElement;
+  game: Game;
+  width: number;
+  height: number;
+  x: number = 0;
+  y: number = 0;
+
+  constructor(gameObjectParams: GameObjectParams) {
+    this.game = gameObjectParams.game;
+    this.element = document.createElement('div');
+    this.element.style.width = (this.width = gameObjectParams.width) + 'px';
+    this.element.style.height = (this.height = gameObjectParams.height) + 'px';
+    this.element.style.transformOrigin = '50% 50%';
+    this.element.style.position = 'absolute';
+    this.game.element.appendChild(this.element);
+
+    this.setPosition(gameObjectParams.x || this.x, gameObjectParams.y || this.y)
+  }
+
+  setPosition(x: number, y: number) {
+    this.x = x;
+    this.y = y;
+
+    this.element.style.left = (this.x - this.width / 2) + 'px';
+    this.element.style.bottom = (this.y - this.height / 2) + 'px';
+  }
+}
+
+class Archer extends GameObject{
+  constructor(gameObjectParams: GameObjectParams) {
+    super(gameObjectParams);
+
+    this.element.style.background = `white`;
+  }
+}
+
+class Floor extends GameObject{
+  constructor(gameObjectParams: GameObjectParams) {
+    super(gameObjectParams);
+
+    this.element.style.zIndex = '-1';
+    this.element.style.background = `url(data:image/gif;base64,${getGrassImageBase64()})`;
+  }
 }
 
 class Game {
-  fieldParent: HTMLElement = document.body;
-  field: HTMLDivElement;
-  fieldWidth: number;
-  fieldHeight: number;
+  element: HTMLElement = document.body;
+  gameWindowWidth: number;
+  gameWindowHeight: number;
+
+  gameObjects: GameObject[] = [];
 
   constructor(gameParams: GameParams) {
-    this.field = document.createElement('div');
-    this.field.style.width = (this.fieldWidth = gameParams.width) + 'px';
-    this.field.style.height = (this.fieldHeight = gameParams.height) + 'px';
-    this.field.style.background = `url(data:image/gif;base64,${getGrassImageBase64()})`;
+    this.element.innerHTML = '';
+    this.element.style.position = 'relative';
+    this.element.style.width = (this.gameWindowWidth = gameParams.gameWindowWidth) + 'px';
+    this.element.style.height = (this.gameWindowHeight = gameParams.gameWindowHeight) + 'px';
+    this.addGameObject(new Floor({
+      game: this,
+      width: this.gameWindowWidth,
+      height: this.gameWindowHeight,
+      x: this.gameWindowWidth / 2,
+      y: this.gameWindowHeight / 2,
+    }));
+    this.addGameObject(new Archer({
+      game: this,
+      width: 25,
+      height: 22,
+      x: this.gameWindowWidth / 2,
+      y: this.gameWindowHeight / 2,
+    }));
+  }
 
-    this.fieldParent.innerHTML = '';
-    this.fieldParent.appendChild(this.field);
+  private addGameObject(gameObject: GameObject) {
+    this.gameObjects.push(gameObject);
   }
 }
 
 new Game({
-  width: 400,
-  height: 400,
+  gameWindowWidth: 400,
+  gameWindowHeight: 400,
 });
 
 function getGrassImageBase64() {
