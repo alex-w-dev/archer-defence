@@ -40,11 +40,10 @@ class GameObject {
   }
 
   lookOn(x: number, y: number) {
-    var diffX = this.x - x;
-    var diffY = this.y - y;
-    var tan = diffY / diffX;
+    const diffX = this.x - x;
+    const diffY = this.y - y;
+    let atan = Math.atan(diffY / diffX) * 180 / Math.PI;
 
-    var atan = Math.atan(tan)* 180 / Math.PI;
     if(diffY >= 0 && diffX >= 0) {
       atan += 180;
     }
