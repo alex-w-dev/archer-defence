@@ -11,6 +11,13 @@ interface GameObjectParams {
   y?: number;
 }
 
+enum SpriteLooks {
+  'Right' = 0,
+  'Down' = 270,
+  'Left' = 180,
+  'Up' = 90,
+}
+
 class GameObject {
   element: HTMLDivElement;
   game: Game;
@@ -18,6 +25,7 @@ class GameObject {
   height: number;
   x: number = 0;
   y: number = 0;
+  spriteLooks: SpriteLooks = SpriteLooks.Right;
 
   constructor(gameObjectParams: GameObjectParams) {
     this.game = gameObjectParams.game;
@@ -51,6 +59,8 @@ class GameObject {
       atan -= 180;
     }
 
+    atan += this.spriteLooks;
+
     this.element.style.transform = `rotate(${atan}deg)`;
   }
 }
@@ -64,6 +74,7 @@ class Archer extends GameObject{
     });
 
     this.element.style.background = `url(data:image/png;base64,${getArcherImageBase64()})`;
+    this.spriteLooks = SpriteLooks.Down;
   }
 }
 
