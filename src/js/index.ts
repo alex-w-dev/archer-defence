@@ -11,10 +11,6 @@ interface GameObjectParams {
   y?: number;
 }
 
-interface Ticking {
-  onTick?: () => void;
-}
-
 enum SpriteLooks {
   'Right' = 0,
   'Down' = 270,
@@ -42,7 +38,7 @@ class GameObject {
 
     this.setPosition(gameObjectParams.x || this.x, gameObjectParams.y || this.y);
 
-    if ((this as Ticking).onTick) this.game.onTick((this as Ticking).onTick.bind(this))
+    this.game.onTick(this.onTick.bind(this));
   }
 
   setPosition(x: number, y: number) {
@@ -69,9 +65,11 @@ class GameObject {
 
     this.element.style.transform = `rotate(${atan}deg)`;
   }
+
+  onTick() {}
 }
 
-class Skeleton extends GameObject implements Ticking{
+class Skeleton extends GameObject{
   constructor(gameObjectParams: GameObjectParams) {
     super(gameObjectParams);
 
@@ -84,7 +82,7 @@ class Skeleton extends GameObject implements Ticking{
   }
 }
 
-class Archer extends GameObject implements Ticking {
+class Archer extends GameObject {
   private previousMousemoveEvent: MouseEvent;
 
   constructor(gameObjectParams: GameObjectParams) {
