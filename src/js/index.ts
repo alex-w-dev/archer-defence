@@ -11,6 +11,10 @@ interface GameObjectParams {
   y?: number;
 }
 
+interface Ticking {
+  onTick?: () => void;
+}
+
 enum SpriteLooks {
   'Right' = 0,
   'Down' = 270,
@@ -36,7 +40,9 @@ class GameObject {
     this.element.style.position = 'absolute';
     this.game.element.appendChild(this.element);
 
-    this.setPosition(gameObjectParams.x || this.x, gameObjectParams.y || this.y)
+    this.setPosition(gameObjectParams.x || this.x, gameObjectParams.y || this.y);
+
+    if ((this as Ticking).onTick) this.game.onTick((this as Ticking).onTick.bind(this))
   }
 
   setPosition(x: number, y: number) {
@@ -65,16 +71,33 @@ class GameObject {
   }
 }
 
-class Archer extends GameObject{
+class Skeleton extends GameObject implements Ticking{
   constructor(gameObjectParams: GameObjectParams) {
     super(gameObjectParams);
 
-    document.addEventListener('mousemove', (e) => {
-      this.lookOn(e.clientX, e.clientY);
-    });
+    this.element.style.background = `url(data:image/png;base64,${getArcherImageBase64()})`;
+    this.spriteLooks = SpriteLooks.Down;
+  }
+
+  onTick() {
+    console.log(Date.now(), 'Date.now()');
+  }
+}
+
+class Archer extends GameObject implements Ticking {
+  private previousMousemoveEvent: MouseEvent;
+
+  constructor(gameObjectParams: GameObjectParams) {
+    super(gameObjectParams);
+
+    document.addEventListener('mousemove', (e) => this.previousMousemoveEvent = e);
 
     this.element.style.background = `url(data:image/png;base64,${getArcherImageBase64()})`;
     this.spriteLooks = SpriteLooks.Down;
+  }
+
+  onTick() {
+    if (this.previousMousemoveEvent) this.lookOn(this.previousMousemoveEvent.clientX, this.previousMousemoveEvent.clientY);
   }
 }
 
@@ -93,6 +116,8 @@ class Game {
   gameWindowHeight: number;
 
   gameObjects: GameObject[] = [];
+
+  private tickSubscriptions: any[] = [];
 
   constructor(gameParams: GameParams) {
     this.element.innerHTML = '';
@@ -113,6 +138,16 @@ class Game {
       x: this.gameWindowWidth / 2,
       y: this.gameWindowHeight / 2,
     }));
+
+    this.startTicking();
+  }
+
+  public onTick(cb: () => void): void {
+    this.tickSubscriptions.push(cb);
+  }
+
+  private startTicking() {
+    setInterval(() => this.tickSubscriptions.forEach(cb => cb()), 30);
   }
 
   private addGameObject(gameObject: GameObject) {
