@@ -46,8 +46,30 @@ class GameObject {
     this.element.style.left = (this.x - this.width / 2) + 'px';
     this.element.style.top = (this.y - this.height / 2) + 'px';
   }
+}
+
+class DynamicGameObject extends GameObject{
+  speed: number = 1;
+
+  constructor(props) {
+    super(props);
+    this.game.onTick(this.onTick.bind(this));
+  }
+
+  onTick(delta) {};
 
   lookOn(x: number, y: number) {
+    const atan = this.getAngleToTarget(x, y) + this.spriteLooks;
+
+    this.element.style.transform = `rotate(${atan}deg)`;
+  }
+
+  stepTo(x: number, y: number, delta) {
+    const atan = this.getAngleToTarget(x, y);
+    this.setPosition(this.x + Math.cos(atan) * delta * this.speed, this.y + Math.sin(atan) * delta * this.speed);
+  }
+
+  private getAngleToTarget(x: number, y: number): number {
     const diffX = this.x - x;
     const diffY = this.y - y;
     let atan = Math.atan(diffY / diffX) * 180 / Math.PI;
@@ -59,31 +81,23 @@ class GameObject {
       atan -= 180;
     }
 
-    atan += this.spriteLooks;
-
-    this.element.style.transform = `rotate(${atan}deg)`;
+    return atan;
   }
 }
 
-class DynamicGameObject extends GameObject{
-  constructor(props) {
-    super(props);
-    this.game.onTick(this.onTick.bind(this));
+class Enemy extends DynamicGameObject{
+  onTick(delta) {
+    this.lookOn(this.game.archer.x, this.game.archer.y);
+    this.stepTo(this.game.archer.x, this.game.archer.y, delta);
   }
-
-  onTick() {};
 }
 
-class Skeleton extends DynamicGameObject{
+class Skeleton extends Enemy{
   constructor(gameObjectParams: GameObjectParams) {
     super(gameObjectParams);
 
     this.element.style.background = `url(data:image/png;base64,${getArcherImageBase64()})`;
     this.spriteLooks = SpriteLooks.Down;
-  }
-
-  onTick() {
-    console.log(Date.now(), 'Date.now()');
   }
 }
 
@@ -118,28 +132,38 @@ class Game {
   gameWindowWidth: number;
   gameWindowHeight: number;
 
-  gameObjects: GameObject[] = [];
+  enemies: GameObject[] = [];
+  archer: GameObject;
+  floor: GameObject;
 
   private tickSubscriptions: any[] = [];
+  private prevTickTime: number = Date.now();
 
   constructor(gameParams: GameParams) {
     this.element.innerHTML = '';
     this.element.style.position = 'relative';
     this.element.style.width = (this.gameWindowWidth = gameParams.gameWindowWidth) + 'px';
     this.element.style.height = (this.gameWindowHeight = gameParams.gameWindowHeight) + 'px';
-    this.addGameObject(new Floor({
+    this.floor = new Floor({
       game: this,
       width: this.gameWindowWidth,
       height: this.gameWindowHeight,
       x: this.gameWindowWidth / 2,
       y: this.gameWindowHeight / 2,
-    }));
-    this.addGameObject(new Archer({
+    });
+    this.archer = new Archer({
       game: this,
       width: 25,
       height: 22,
       x: this.gameWindowWidth / 2,
       y: this.gameWindowHeight / 2,
+    });
+    this.enemies.push(new Skeleton({
+      game: this,
+      width: 25,
+      height: 22,
+      x: 0,
+      y: 0,
     }));
 
     this.startTicking();
@@ -150,17 +174,18 @@ class Game {
   }
 
   private startTicking() {
-    setInterval(() => this.tickSubscriptions.forEach(cb => cb()), 30);
-  }
-
-  private addGameObject(gameObject: GameObject) {
-    this.gameObjects.push(gameObject);
+    setInterval(() => {
+      const now = Date.now();
+      const delta = now - this.prevTickTime;
+      this.tickSubscriptions.forEach(cb => cb(delta / (1000 / 30)));
+      this.prevTickTime = now;
+    }, 30);
   }
 }
 
 new Game({
-  gameWindowWidth: 400,
-  gameWindowHeight: 400,
+  gameWindowWidth: 500,
+  gameWindowHeight: 500,
 });
 
 function getGrassImageBase64() {
