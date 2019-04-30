@@ -37,8 +37,6 @@ class GameObject {
     this.game.element.appendChild(this.element);
 
     this.setPosition(gameObjectParams.x || this.x, gameObjectParams.y || this.y);
-
-    this.game.onTick(this.onTick.bind(this));
   }
 
   setPosition(x: number, y: number) {
@@ -65,11 +63,18 @@ class GameObject {
 
     this.element.style.transform = `rotate(${atan}deg)`;
   }
-
-  onTick() {}
 }
 
-class Skeleton extends GameObject{
+class DynamicGameObject extends GameObject{
+  constructor(props) {
+    super(props);
+    this.game.onTick(this.onTick.bind(this));
+  }
+
+  onTick() {};
+}
+
+class Skeleton extends DynamicGameObject{
   constructor(gameObjectParams: GameObjectParams) {
     super(gameObjectParams);
 
@@ -82,7 +87,7 @@ class Skeleton extends GameObject{
   }
 }
 
-class Archer extends GameObject {
+class Archer extends DynamicGameObject {
   private previousMousemoveEvent: MouseEvent;
 
   constructor(gameObjectParams: GameObjectParams) {
