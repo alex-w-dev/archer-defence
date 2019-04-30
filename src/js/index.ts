@@ -50,6 +50,8 @@ class GameObject {
 
 class DynamicGameObject extends GameObject{
   speed: number = 1;
+  attackSpeed: number = 3;
+  lastAttackTime: number = Date.now();
 
   constructor(props) {
     super(props);
@@ -62,6 +64,16 @@ class DynamicGameObject extends GameObject{
     const atan = this.getAngleToTarget(x, y) + this.spriteLooks;
 
     this.element.style.transform = `rotate(${atan}deg)`;
+  }
+
+  attackTo(x: number, y: number) {
+    this.lookOn(x, y);
+
+    const now = Date.now();
+    if (this.lastAttackTime + 1000 / this.attackSpeed < now) {
+      console.log(`attack`, '`attack`');
+      this.lastAttackTime = now;
+    }
   }
 
   stepTo(x: number, y: number, delta) {
@@ -86,9 +98,22 @@ class DynamicGameObject extends GameObject{
 }
 
 class Enemy extends DynamicGameObject{
+  attackRange: number = 20;
+
   onTick(delta) {
-    this.lookOn(this.game.archer.x, this.game.archer.y);
-    this.stepTo(this.game.archer.x, this.game.archer.y, delta);
+    if (this.canAttackArcher()) {
+      this.attackTo(this.game.archer.x, this.game.archer.y);
+    } else {
+      this.lookOn(this.game.archer.x, this.game.archer.y);
+      this.stepTo(this.game.archer.x, this.game.archer.y, delta);
+    }
+  }
+
+  canAttackArcher(): boolean {
+    const diffX = this.x - this.game.archer.x;
+    const diffY = this.y - this.game.archer.y;
+
+    return Math.sqrt( diffX * diffX + diffY * diffY ) <= this.attackRange;
   }
 }
 
