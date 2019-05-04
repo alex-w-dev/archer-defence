@@ -52,6 +52,7 @@ class DynamicGameObject extends GameObject{
   speed: number = 1;
   attackSpeed: number = 3;
   lastAttackTime: number = Date.now();
+  bullet: Bullet;
 
   constructor(props) {
     super(props);
@@ -64,16 +65,6 @@ class DynamicGameObject extends GameObject{
     const atan = this.getAngleToTarget(x, y) + this.spriteLooks;
 
     this.element.style.transform = `rotate(${atan}deg)`;
-  }
-
-  attackTo(x: number, y: number) {
-    this.lookOn(x, y);
-
-    const now = Date.now();
-    if (this.lastAttackTime + 1000 / this.attackSpeed < now) {
-      console.log(`attack`, '`attack`');
-      this.lastAttackTime = now;
-    }
   }
 
   stepTo(x: number, y: number, delta) {
@@ -97,7 +88,25 @@ class DynamicGameObject extends GameObject{
   }
 }
 
-class Enemy extends DynamicGameObject{
+class Bullet extends DynamicGameObject {
+  constructor (gameObjectParams: GameObjectParams) {
+    super(gameObjectParams);
+  }
+}
+
+class Fighter extends DynamicGameObject{
+  attackTo(x: number, y: number) {
+    this.lookOn(x, y);
+
+    const now = Date.now();
+    if (this.lastAttackTime + 1000 / this.attackSpeed < now) {
+      console.log(`attack`, '`attack`');
+      this.lastAttackTime = now;
+    }
+  }
+}
+
+class Enemy extends Fighter{
   attackRange: number = 20;
 
   onTick(delta) {
@@ -126,7 +135,7 @@ class Skeleton extends Enemy{
   }
 }
 
-class Archer extends DynamicGameObject {
+class Archer extends Fighter {
   private previousMousemoveEvent: MouseEvent;
 
   constructor(gameObjectParams: GameObjectParams) {
