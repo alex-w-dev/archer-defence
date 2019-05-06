@@ -27,32 +27,26 @@ class GameObject {
     this.setPosition(0, 0);
   }
 
-  addToGame(game: Game): GameObject {
+  addToGame(game: Game) {
     this.game = game;
     this.game.element.appendChild(this.element);
-
-    return this;
   }
 
-  setSize(width: number, height: number): GameObject {
+  setSize(width: number, height: number) {
     this.width = width;
     this.height = height;
     this.element.style.width = this.width + 'px';
     this.element.style.height = this.height + 'px';
     this.element.style.marginLeft = '-' + this.width / 2  + 'px';
     this.element.style.marginTop = '-' + this.height / 2  + 'px';
-    
-    return this;
   }
 
-  setPosition(x: number, y: number): GameObject {
+  setPosition(x: number, y: number) {
     this.x = x;
     this.y = y;
 
     this.element.style.left = (this.x - this.width / 2) + 'px';
     this.element.style.top = (this.y - this.height / 2) + 'px';
-
-    return this;
   }
 }
 
@@ -66,11 +60,9 @@ class DynamicGameObject extends GameObject{
     super();
   }
 
-  addToGame(game: Game): DynamicGameObject {
+  addToGame(game: Game) {
     super.addToGame(game);
     this.game.onTick(this.onTick.bind(this));
-
-    return this;
   }
 
   onTick(delta) {};
@@ -86,7 +78,7 @@ class DynamicGameObject extends GameObject{
     this.setPosition(this.x + Math.cos(atan) * delta * this.speed, this.y + Math.sin(atan) * delta * this.speed);
   }
 
-  private getAngleToTarget(x: number, y: number): number {
+  protected getAngleToTarget(x: number, y: number): number {
     const diffX = this.x - x;
     const diffY = this.y - y;
     let atan = Math.atan(diffY / diffX) * 180 / Math.PI;
@@ -103,11 +95,26 @@ class DynamicGameObject extends GameObject{
 }
 
 class Bullet extends DynamicGameObject {
-  target: GameObject;
+  atan: number;
 
-  setTarget(): Bullet {
-    return this;
+  constructor() {
+    super();
+
+    this.element.style.background = `url(data:image/png;base64,${getArcherImageBase64()})`;
+    this.spriteLooks = SpriteLooks.Down;
+    this.setSize(25, 22);
   }
+
+  setTarget(x: number, y: number) {
+    this.atan = this.getAngleToTarget(x, y);
+  }
+
+  onTick(delta) {
+    this.setPosition(
+      this.x += Math.cos(this.atan / 180 * Math.PI),
+      this.y += Math.sin(this.atan / 180 * Math.PI),
+    );
+  };
 }
 
 class Fighter extends DynamicGameObject{
@@ -159,6 +166,13 @@ class Archer extends Fighter {
     super();
 
     document.addEventListener('mousemove', (e) => this.previousMousemoveEvent = e);
+    document.addEventListener('click', (e) => {
+      const bullet = new Bullet();
+
+      bullet.setPosition(this.x, this.y);
+      bullet.setTarget(this.previousMousemoveEvent.clientX, this.previousMousemoveEvent.clientY);
+      bullet.addToGame(this.game);
+    });
 
     this.element.style.background = `url(data:image/png;base64,${getArcherImageBase64()})`;
     this.spriteLooks = SpriteLooks.Down;
@@ -184,9 +198,9 @@ class Game {
   gameWindowWidth: number;
   gameWindowHeight: number;
 
-  enemies: GameObject[] = [];
-  archer: GameObject;
-  floor: GameObject;
+  enemies: Enemy[] = [];
+  archer: Archer;
+  floor: Floor;
 
   private tickSubscriptions: any[] = [];
   private prevTickTime: number = Date.now();
@@ -196,14 +210,17 @@ class Game {
     this.element.style.position = 'relative';
     this.element.style.width = (this.gameWindowWidth = gameParams.gameWindowWidth) + 'px';
     this.element.style.height = (this.gameWindowHeight = gameParams.gameWindowHeight) + 'px';
-    this.floor = new Floor()
-      .setPosition(this.gameWindowWidth / 2, this.gameWindowHeight / 2)
-      .setSize(this.gameWindowWidth, this.gameWindowHeight)
-      .addToGame(this);
-    this.archer = new Archer()
-      .setPosition(this.gameWindowWidth / 2, this.gameWindowHeight / 2)
-      .addToGame(this);
-    this.enemies.push(new Skeleton().addToGame(this));
+    this.floor = new Floor();
+    this.floor.setPosition(this.gameWindowWidth / 2, this.gameWindowHeight / 2);
+    this.floor.setSize(this.gameWindowWidth, this.gameWindowHeight);
+    this.floor.addToGame(this);
+    this.archer = new Archer();
+    this.archer.setPosition(this.gameWindowWidth / 2, this.gameWindowHeight / 2);
+    this.archer.addToGame(this);
+
+    const skeleton = new Skeleton();
+    skeleton.addToGame(this);
+    this.enemies.push(skeleton);
 
     this.startTicking();
   }
