@@ -154,8 +154,8 @@ class Bullet extends DynamicGameObject {
 
   onTick(delta) {
     this.setPosition(
-      this.x += Math.cos(this.angle / 180 * Math.PI),
-      this.y += Math.sin(this.angle / 180 * Math.PI),
+      this.x += Math.cos(this.angle / 180 * Math.PI) * this.speed,
+      this.y += Math.sin(this.angle / 180 * Math.PI) * this.speed,
     );
 
     if (this.x < 0 || this.x > this.game.floor.width || this.y < 0 || this.y > this.game.floor.height) {
@@ -165,6 +165,12 @@ class Bullet extends DynamicGameObject {
 }
 
 class ArchersBullet extends Bullet {
+  constructor() {
+    super();
+
+    this.speed = 3;
+  }
+
   onTick(delta) {
     super.onTick(delta);
 
@@ -395,7 +401,7 @@ class Game {
 
   private generateRandomEnemy() {
     const difficultIndex = 0;
-    const enemyIndex = 2;
+    const enemyIndex = 0;
 
     const enemyDefinition = {...ENEMIES[enemyIndex]};
 
