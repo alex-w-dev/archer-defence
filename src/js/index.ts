@@ -22,7 +22,7 @@ interface IEnemyParams extends IEnemyDefinition{
   attackRange: number,
   attackSpeed: number,
   speed: number,
-  levelIndex: number, // for shadow color
+  difficultIndex: number, // for shadow color
 }
 
 enum SpriteLooks {
@@ -244,7 +244,10 @@ class Enemy extends Fighter{
   destroy() {
     super.destroy();
 
-    if (this.game) this.game.enemies.delete(this);
+    if (this.game) {
+      this.game.addScore();
+      this.game.enemies.delete(this);
+    }
   }
 
   addToGame(game: Game) {
@@ -320,6 +323,8 @@ class Floor extends GameObject{
 }
 
 class Game {
+  level: number = 1;
+  score: number = 0;
   element: HTMLElement = document.body;
   gameWindowWidth: number;
   gameWindowHeight: number;
@@ -372,8 +377,14 @@ class Game {
     this.tickSubscriptions.delete(cb);
   }
 
+  public addScore() {
+    ++this.score;
+
+    this.level = Math.max(Math.ceil(Math.sqrt(this.score / 5)), 1)
+  }
+
   private generateRandomEnemy() {
-    const levelIndex = 0;
+    const difficultIndex = 0;
     const enemyIndex = 1;
 
     const enemyDefinition = {...ENEMIES[enemyIndex]};
@@ -381,10 +392,10 @@ class Game {
     const enemy = new Enemy({
       ...enemyDefinition,
       ...{
-        attackRange: enemyDefinition.attackRanges[levelIndex],
-        attackSpeed: enemyDefinition.attackSpeeds[levelIndex],
-        speed: enemyDefinition.speeds[levelIndex],
-        levelIndex,
+        attackRange: enemyDefinition.attackRanges[difficultIndex],
+        attackSpeed: enemyDefinition.attackSpeeds[difficultIndex],
+        speed: enemyDefinition.speeds[difficultIndex],
+        difficultIndex: difficultIndex,
       }
     });
     enemy.setPosition(0, 0);
