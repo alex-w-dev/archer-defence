@@ -306,22 +306,13 @@ new Game({
 });
 
 function detectCollision(gameObject1: GameObject, gameObject2: GameObject): boolean {
-  const circle1 = {
-    radius: Math.min(gameObject1.width, gameObject1.height) / 2,
-    x: gameObject1.x,
-    y: gameObject1.y,
-  };
-  const circle2 = {
-    radius: Math.min(gameObject2.width, gameObject2.height) / 2,
-    x: gameObject2.x,
-    y: gameObject2.y,
-  };
+  const radius1 = Math.min(gameObject1.width, gameObject1.height) / 2;
+  const radius2 = Math.min(gameObject2.width, gameObject2.height) / 2;
+  const dx = gameObject1.x - gameObject2.x;
+  const dy = gameObject1.y - gameObject2.y;
+  const distance = Math.sqrt(dx * dx + dy * dy);
 
-  var dx = circle1.x - circle2.x;
-  var dy = circle1.y - circle2.y;
-  var distance = Math.sqrt(dx * dx + dy * dy);
-
-  return distance < circle1.radius + circle2.radius;
+  return distance < radius1 + radius2;
 }
 
 function getGrassImageBase64() {
