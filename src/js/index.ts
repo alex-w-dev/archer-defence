@@ -3,6 +3,8 @@ interface GameParams {
   gameWindowHeight: number;
 }
 
+type onTickFunction = (delta: number) => void;
+
 enum SpriteLooks {
   'Right' = 0,
   'Down' = 270,
@@ -27,6 +29,12 @@ class GameObject {
     this.setPosition(0, 0);
   }
 
+  destroy() {
+    if (this.game) {
+      this.game.element.removeChild(this.element);
+    }
+  }
+
   addToGame(game: Game) {
     this.game = game;
     this.game.element.appendChild(this.element);
@@ -45,8 +53,8 @@ class GameObject {
     this.x = x;
     this.y = y;
 
-    this.element.style.left = (this.x - this.width / 2) + 'px';
-    this.element.style.top = (this.y - this.height / 2) + 'px';
+    this.element.style.left = this.x + 'px';
+    this.element.style.top = this.y + 'px';
   }
 }
 
@@ -56,13 +64,25 @@ class DynamicGameObject extends GameObject{
   lastAttackTime: number = Date.now();
   bullet: Bullet;
 
+  protected bindOnTick: onTickFunction;
+
   constructor() {
     super();
   }
 
+  destroy() {
+    super.destroy();
+
+    if (this.bindOnTick) {
+      this.game.tickUnsubscribe(this.bindOnTick);
+    }
+  }
+
   addToGame(game: Game) {
     super.addToGame(game);
-    this.game.onTick(this.onTick.bind(this));
+
+    this.bindOnTick = this.onTick.bind(this);
+    this.game.tickSubscribe(this.bindOnTick);
   }
 
   onTick(delta) {};
@@ -114,6 +134,10 @@ class Bullet extends DynamicGameObject {
       this.x += Math.cos(this.atan / 180 * Math.PI),
       this.y += Math.sin(this.atan / 180 * Math.PI),
     );
+
+    if (this.x < 0 || this.x > this.game.floor.width || this.y < 0 || this.y > this.game.floor.height) {
+      this.destroy();
+    }
   };
 }
 
@@ -131,6 +155,18 @@ class Fighter extends DynamicGameObject{
 
 class Enemy extends Fighter{
   attackRange: number = 20;
+
+  destroy() {
+    super.destroy();
+
+    if (this.game) this.game.enemies.delete(this);
+  }
+
+  addToGame(game: Game) {
+    super.addToGame(game);
+
+    this.game.enemies.add(this);
+  }
 
   onTick(delta) {
     if (this.canAttackArcher()) {
@@ -198,11 +234,11 @@ class Game {
   gameWindowWidth: number;
   gameWindowHeight: number;
 
-  enemies: Enemy[] = [];
+  enemies: Set<Enemy> = new Set<Enemy>();
   archer: Archer;
   floor: Floor;
 
-  private tickSubscriptions: any[] = [];
+  private tickSubscriptions: Set<onTickFunction> = new Set<onTickFunction>();
   private prevTickTime: number = Date.now();
 
   constructor(gameParams: GameParams) {
@@ -220,13 +256,16 @@ class Game {
 
     const skeleton = new Skeleton();
     skeleton.addToGame(this);
-    this.enemies.push(skeleton);
 
     this.startTicking();
   }
 
-  public onTick(cb: () => void): void {
-    this.tickSubscriptions.push(cb);
+  public tickSubscribe(cb: onTickFunction): void {
+    this.tickSubscriptions.add(cb);
+  }
+
+  public tickUnsubscribe(cb: onTickFunction): void {
+    this.tickSubscriptions.delete(cb);
   }
 
   private startTicking() {
