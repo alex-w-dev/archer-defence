@@ -162,13 +162,32 @@ class ArchersBullet extends Bullet {
   }
 }
 
+class EnemiesBullet extends Bullet {
+  onTick(delta) {
+    super.onTick(delta);
+
+    if (detectCollision(this, this.game.archer)) {
+      this.destroy();
+      this.game.archer.destroy();
+    }
+  }
+}
+
 class Fighter extends DynamicGameObject{
+  bullet: typeof Bullet;
+
   attackTo(x: number, y: number) {
     this.lookOn(x, y);
 
     const now = Date.now();
     if (this.lastAttackTime + 1000 / this.attackSpeed < now) {
-      console.log(`attack`, '`attack`');
+      const bullet = new this.bullet();
+
+      bullet.setPosition(this.x, this.y);
+      bullet.lookOn(x, y);
+      bullet.setDirection(this.getAngleToTarget(x, y));
+      bullet.addToGame(this.game);
+
       this.lastAttackTime = now;
     }
   }
@@ -176,6 +195,7 @@ class Fighter extends DynamicGameObject{
 
 class Enemy extends Fighter{
   attackRange: number = 20;
+  bullet: typeof Bullet = EnemiesBullet;
 
   destroy() {
     super.destroy();
@@ -217,6 +237,8 @@ class Skeleton extends Enemy{
 }
 
 class Archer extends Fighter {
+  bullet: typeof Bullet = ArchersBullet;
+
   private previousMousemoveEvent: MouseEvent;
 
   constructor() {
@@ -224,12 +246,7 @@ class Archer extends Fighter {
 
     document.addEventListener('mousemove', (e) => this.previousMousemoveEvent = e);
     document.addEventListener('click', (e) => {
-      const bullet = new ArchersBullet();
-
-      bullet.setPosition(this.x, this.y);
-      bullet.lookOn(this.previousMousemoveEvent.clientX, this.previousMousemoveEvent.clientY);
-      bullet.setDirection(this.getAngleToTarget(this.previousMousemoveEvent.clientX, this.previousMousemoveEvent.clientY));
-      bullet.addToGame(this.game);
+      this.attackTo(this.previousMousemoveEvent.clientX, this.previousMousemoveEvent.clientY);
     });
 
     this.element.style.background = `url(data:image/png;base64,${getArcherImageBase64()})`;
@@ -239,6 +256,12 @@ class Archer extends Fighter {
 
   onTick() {
     if (this.previousMousemoveEvent) this.lookOn(this.previousMousemoveEvent.clientX, this.previousMousemoveEvent.clientY);
+  }
+
+  destroy() {
+    // super.destroy();
+
+    this.game.gameOver();
   }
 }
 
@@ -259,9 +282,11 @@ class Game {
   enemies: Set<Enemy> = new Set<Enemy>();
   archer: Archer;
   floor: Floor;
+  isGamePlay: boolean = true;
 
   private tickSubscriptions: Set<onTickFunction> = new Set<onTickFunction>();
   private prevTickTime: number = Date.now();
+  private tickingInterval: any;
 
   constructor(gameParams: GameParams) {
     this.element.innerHTML = '';
@@ -282,6 +307,19 @@ class Game {
     this.startTicking();
   }
 
+  public gameOver(): void {
+    alert('Game Over');
+
+    this.destroy();
+  }
+
+  public destroy(): void {
+    this.isGamePlay = false;
+
+    clearInterval(this.tickingInterval);
+    this.tickingInterval = null;
+  }
+
   public tickSubscribe(cb: onTickFunction): void {
     this.tickSubscriptions.add(cb);
   }
@@ -291,10 +329,14 @@ class Game {
   }
 
   private startTicking() {
-    setInterval(() => {
+    this.tickingInterval = setInterval(() => {
       const now = Date.now();
       const delta = now - this.prevTickTime;
-      this.tickSubscriptions.forEach(cb => cb(delta / (1000 / 30)));
+      this.tickSubscriptions.forEach(cb => {
+        if (this.isGamePlay) {
+          cb(delta / (1000 / 30))
+        }
+      });
       this.prevTickTime = now;
     }, 30);
   }
