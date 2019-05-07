@@ -3,7 +3,27 @@ interface GameParams {
   gameWindowHeight: number;
 }
 
-type onTickFunction = (delta: number) => void;
+type IOnTickFunction = (delta: number) => void;
+
+interface IEnemyDefinition {
+  image: string;
+  spriteLooks: SpriteLooks;
+  size: {
+    width: number,
+    height: number,
+  };
+  bullet: typeof Bullet;
+  attackRanges: [number, number, number];
+  attackSpeeds: [number, number, number];
+  speeds: [number, number, number];
+}
+
+interface IEnemyParams extends IEnemyDefinition{
+  attackRange: number,
+  attackSpeed: number,
+  speed: number,
+  levelIndex: number,
+}
 
 enum SpriteLooks {
   'Right' = 0,
@@ -68,7 +88,7 @@ class DynamicGameObject extends GameObject{
   attackSpeed: number = 3;
   lastAttackTime: number = Date.now();
 
-  protected bindOnTick: onTickFunction;
+  protected bindOnTick: IOnTickFunction;
 
   constructor() {
     super();
@@ -197,6 +217,18 @@ class Enemy extends Fighter{
   attackRange: number = 20;
   bullet: typeof Bullet = EnemiesBullet;
 
+  constructor(enemyParams: IEnemyParams) {
+    super();
+
+    this.element.style.background = `url(data:image/png;base64,${enemyParams.image})`;
+    this.spriteLooks = enemyParams.spriteLooks;
+    this.setSize(enemyParams.size.width, enemyParams.size.height);
+    this.attackRange = enemyParams.attackRange;
+    this.attackSpeed = enemyParams.attackSpeed;
+    this.speed = enemyParams.speed;
+  }
+
+
   destroy() {
     super.destroy();
 
@@ -223,16 +255,6 @@ class Enemy extends Fighter{
     const diffY = this.y - this.game.archer.y;
 
     return Math.sqrt( diffX * diffX + diffY * diffY ) <= this.attackRange;
-  }
-}
-
-class Skeleton extends Enemy{
-  constructor() {
-    super();
-
-    this.element.style.background = `url(data:image/png;base64,${getSkeletonImageBase64()})`;
-    this.spriteLooks = SpriteLooks.Down;
-    this.setSize(25, 22);
   }
 }
 
@@ -284,7 +306,7 @@ class Game {
   floor: Floor;
   isGamePlay: boolean = true;
 
-  private tickSubscriptions: Set<onTickFunction> = new Set<onTickFunction>();
+  private tickSubscriptions: Set<IOnTickFunction> = new Set<IOnTickFunction>();
   private prevTickTime: number = Date.now();
   private tickingInterval: any;
 
@@ -301,8 +323,7 @@ class Game {
     this.archer.setPosition(this.gameWindowWidth / 2, this.gameWindowHeight / 2);
     this.archer.addToGame(this);
 
-    const skeleton = new Skeleton();
-    skeleton.addToGame(this);
+    this.generateRandomEnemy();
 
     this.startTicking();
   }
@@ -320,12 +341,31 @@ class Game {
     this.tickingInterval = null;
   }
 
-  public tickSubscribe(cb: onTickFunction): void {
+  public tickSubscribe(cb: IOnTickFunction): void {
     this.tickSubscriptions.add(cb);
   }
 
-  public tickUnsubscribe(cb: onTickFunction): void {
+  public tickUnsubscribe(cb: IOnTickFunction): void {
     this.tickSubscriptions.delete(cb);
+  }
+
+  private generateRandomEnemy() {
+    const levelIndex = 0;
+    const enemyIndex = 0;
+
+    const enemyDefinition = {...ENEMIES[enemyIndex]};
+
+    const enemy = new Enemy({
+      ...enemyDefinition,
+      ...{
+        attackRange: enemyDefinition.attackRanges[levelIndex],
+        attackSpeed: enemyDefinition.attackSpeeds[levelIndex],
+        speed: enemyDefinition.speeds[levelIndex],
+        levelIndex,
+      }
+    });
+    enemy.setPosition(0, 0);
+    enemy.addToGame(this);
   }
 
   private startTicking() {
@@ -341,6 +381,21 @@ class Game {
     }, 30);
   }
 }
+
+const ENEMIES: Array<IEnemyDefinition> = [
+  {
+    image: getSkeletonImageBase64(),
+    spriteLooks: SpriteLooks.Down,
+    size: {
+      width: 25,
+      height: 22,
+    },
+    bullet: EnemiesBullet,
+    attackRanges: [20, 20, 20],
+    attackSpeeds: [1, 2, 3],
+    speeds: [1, 1.5, 2],
+  },
+];
 
 new Game({
   gameWindowWidth: 500,
