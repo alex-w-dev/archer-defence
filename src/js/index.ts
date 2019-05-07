@@ -92,34 +92,34 @@ class DynamicGameObject extends GameObject{
   onTick(delta) {};
 
   lookOn(x: number, y: number) {
-    const atan = this.getAngleToTarget(x, y) + this.spriteLooks;
+    const angle = this.getAngleToTarget(x, y) + this.spriteLooks;
 
-    this.element.style.transform = `rotate(${atan}deg)`;
+    this.element.style.transform = `rotate(${angle}deg)`;
   }
 
   stepTo(x: number, y: number, delta) {
-    const atan = this.getAngleToTarget(x, y);
-    this.setPosition(this.x + Math.cos(atan) * delta * this.speed, this.y + Math.sin(atan) * delta * this.speed);
+    const angle = this.getAngleToTarget(x, y);
+    this.setPosition(this.x + Math.cos(angle) * delta * this.speed, this.y + Math.sin(angle) * delta * this.speed);
   }
 
   protected getAngleToTarget(x: number, y: number): number {
     const diffX = this.x - x;
     const diffY = this.y - y;
-    let atan = Math.atan(diffY / diffX) * 180 / Math.PI;
+    let angle = Math.atan(diffY / diffX) * 180 / Math.PI;
 
     if(diffY >= 0 && diffX >= 0) {
-      atan += 180;
+      angle += 180;
     }
     else if(diffY <= 0 && diffX >= 0) {
-      atan -= 180;
+      angle -= 180;
     }
 
-    return atan;
+    return angle;
   }
 }
 
 class Bullet extends DynamicGameObject {
-  atan: number;
+  angle: number;
 
   constructor() {
     super();
@@ -129,14 +129,14 @@ class Bullet extends DynamicGameObject {
     this.setSize(20, 4);
   }
 
-  setDirection(atan: number) {
-    this.atan = atan;
+  setDirection(angle: number) {
+    this.angle = angle;
   }
 
   onTick(delta) {
     this.setPosition(
-      this.x += Math.cos(this.atan / 180 * Math.PI),
-      this.y += Math.sin(this.atan / 180 * Math.PI),
+      this.x += Math.cos(this.angle / 180 * Math.PI),
+      this.y += Math.sin(this.angle / 180 * Math.PI),
     );
 
     if (this.x < 0 || this.x > this.game.floor.width || this.y < 0 || this.y > this.game.floor.height) {
