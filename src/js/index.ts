@@ -85,7 +85,6 @@ class GameObject {
 
 class DynamicGameObject extends GameObject{
   speed: number = 1;
-  attackSpeed: number = 3;
   lastAttackTime: number = Date.now();
 
   protected bindOnTick: IOnTickFunction;
@@ -206,6 +205,7 @@ class SkeletonsSword extends EnemiesArrow {
 }
 
 class Fighter extends DynamicGameObject{
+  attackSpeed: number = 1;
   bullet: typeof Bullet;
 
   attackTo(x: number, y: number) {
@@ -272,15 +272,20 @@ class Enemy extends Fighter{
 
 class Archer extends Fighter {
   bullet: typeof Bullet = ArchersBullet;
+  attackSpeed: number = 2;
 
   private previousMousemoveEvent: MouseEvent;
+  private isMouseDown: boolean = false;
 
   constructor() {
     super();
 
     document.addEventListener('mousemove', (e) => this.previousMousemoveEvent = e);
-    document.addEventListener('click', (e) => {
-      this.attackTo(this.previousMousemoveEvent.clientX, this.previousMousemoveEvent.clientY);
+    document.addEventListener('mousedown', (e) => {
+      this.isMouseDown = true;
+    });
+    document.addEventListener('mouseup', (e) => {
+      this.isMouseDown = false;
     });
 
     this.element.style.background = `url(data:image/png;base64,${getArcherImageBase64()})`;
@@ -289,7 +294,13 @@ class Archer extends Fighter {
   }
 
   onTick() {
-    if (this.previousMousemoveEvent) this.lookOn(this.previousMousemoveEvent.clientX, this.previousMousemoveEvent.clientY);
+    if (this.previousMousemoveEvent) {
+      this.lookOn(this.previousMousemoveEvent.clientX, this.previousMousemoveEvent.clientY);
+
+      if (this.isMouseDown) {
+        this.attackTo(this.previousMousemoveEvent.clientX, this.previousMousemoveEvent.clientY);
+      }
+    }
   }
 
   destroy() {
