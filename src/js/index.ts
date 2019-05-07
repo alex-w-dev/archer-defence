@@ -120,9 +120,9 @@ class Bullet extends DynamicGameObject {
   constructor() {
     super();
 
-    this.element.style.background = `url(data:image/png;base64,${getArcherImageBase64()})`;
-    this.spriteLooks = SpriteLooks.Down;
-    this.setSize(25, 22);
+    this.element.style.background = `url(data:image/png;base64,${getArrowImageBase64()})`;
+    this.spriteLooks = SpriteLooks.Left;
+    this.setSize(20, 4);
   }
 
   setDirection(atan: number) {
@@ -206,6 +206,7 @@ class Archer extends Fighter {
       const bullet = new Bullet();
 
       bullet.setPosition(this.x, this.y);
+      bullet.lookOn(this.previousMousemoveEvent.clientX, this.previousMousemoveEvent.clientY);
       bullet.setDirection(this.getAngleToTarget(this.previousMousemoveEvent.clientX, this.previousMousemoveEvent.clientY));
       bullet.addToGame(this.game);
     });
@@ -293,4 +294,8 @@ function getArcherImageBase64() {
 
 function getSkeletonImageBase64() {
   return 'iVBORw0KGgoAAAANSUhEUgAAABkAAAAZCAYAAADE6YVjAAAABGdBTUEAALGOfPtRkwAAACBjSFJNAAB6JQAAgIMAAPn/AACA6QAAdTAAAOpgAAA6mAAAF2+SX8VGAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAABmJLR0QA/wD/AP+gvaeTAAAAEnRFWHRFWElGOk9yaWVudGF0aW9uADGEWOzvAAADy0lEQVRIS72Uf0xTVxTHv0ApYkstBQsyg2tFkGahdp0JkWBwZHWbJOI2RKdmS0z3K9lG4oZmS0TXzIRsg7FlWYBtOvEHhmgwWArMGi0UyvilrWmNqNjOCUo7sPyU4u5e795wDPqIRvb559xz7nn3m3PuuS+IMGCeCWbtvDJN5M95qom2q/GcAXWnj0K2fAUG3H0AbwHu3HLhpdd2IFOTzaY+PrQSV48doXwhepwuDHjHcayyCs8oVVMCg4MD1D4OVxx2BLvv9qG/1wXVsyq8+roWO97ejY0bssALF8Nuu4jvigpQ9Nn76OtlKnxEXtmgQUhQ0N/tYmMUh60NRv0xxMYnYmJkFILIaPxYVg7fxBhEghCsz8rB9p0fgs/ns1885P74OEaGvZBES7FGlYLjJ6uxTC6fKeLzTcDaYUFUzBI8LVtBYy+vU0KjycLvLidkiUm45riIjBeykbZuPaKYA/34fJNoOFmOTttlNNS1QG88B5FYTPdmjHBoKB/q1LVTAsb6GuzTFWGrdhcimAMjo2MQKZHSSpsuNODWbz0074fi3RAtTUGTyYYP8t6cEvDD+Ri93nso++YAzI0tSEiQ4b28fCwQiCEULcT3hZ9iFBFIVSuZMoZhau9Ga1MjjGYL7vY58Yu+GtuYtvrhfIz11YeQqFBi46ZsDA16wAsTwjs8Bo9nEGP3H2ByZBjSpfEoLC6Ho6OdCviRxi5DlCQSJ34upT78lczG+boqctZwivUIKdblE6u1i3R2dpGbrptk70c7aVyzNp3kPp9O1//mD4+b7Honl65nreRGtwMOuw2ZL25iI8A2bR5OVx3B2OgIOlvNcLs9iI+VIk4Ujkqjic16iLP7EtOnUFy7emX2dt24akUYb/qILmamLU4qQX1tNdqaz8Pc1gPt9i04WFPPZkznNvOuFgnCIU9ICtyu8pIC0vWrifUI0etrqf36i89Jalo6+an0W8Z7QGNzEVDEz4E9Wqa3/XTtHRoiOp2OJK1MJhWHykirSU8Ol35J2izNdJ8LThE/hZ+8S267rhNdwR4iXfIUqTlzhjiv28lX+z8mGWmryd78t9jMwHCOsJ+MrM04frAE1st2ZK5ZBUWyAkJxLOLkCqbnwVilWs1mBmZOEfHieBytbcfyGD425+ZALpdBwryBlYpkpCjVsDTPnKz/wiliMBhQUXEYHRYzdCWVyM55g90BJse9GLrnwSLhQjYSGE4RtVoN3f59dM3jhVD7D/ZLLXhOnYIwQQQb4YC9m0em2XiK9N/pZT1uOH+QT4o5L/5J8D+IAH8BRerXTQLCVP4AAAAASUVORK5CYII=';
+}
+
+function getArrowImageBase64() {
+  return 'iVBORw0KGgoAAAANSUhEUgAAABQAAAAECAYAAACOXx+WAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAADYSURBVChTY/wPBAxA8OzpE4aLF84yeHr7g7gkgWlTehnk5RUZNm9ax8AAMvDatSv/Vy1fBGL+//P7N5j++/cvmP7z98//N29eg9nv3r75v2HdSjB7754d/z99/PB/ycL5/69fv/zfx9Pl/9evn/8zNtSW/7965QLD6vU7GcpLshl+/PjOwMrKBrSXkYGJCYSZGVhYWMAu4eDkZODm5mH48+c3Az+/IFAFA8PXr18YXr9+BVLOYGnpzAD38sePHxhWrljMkJaeC+KSBKorixkkJMQZ/v37xwAA/e15wAGN3fIAAAAASUVORK5CYII=';
 }
