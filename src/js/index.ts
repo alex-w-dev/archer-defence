@@ -210,6 +210,13 @@ class EnemiesFireBall extends EnemiesArrow {
 class SkeletonsSword extends EnemiesArrow {
   tickTime: number = 5;
 
+  constructor() {
+    super();
+
+    this.speed = 3;
+  }
+
+
   onTick(delta) {
     super.onTick(delta);
 
