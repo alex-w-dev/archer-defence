@@ -105,8 +105,8 @@ class Bullet extends DynamicGameObject {
     this.setSize(25, 22);
   }
 
-  setTarget(x: number, y: number) {
-    this.atan = this.getAngleToTarget(x, y);
+  setDirection(atan: number) {
+    this.atan = atan;
   }
 
   onTick(delta) {
@@ -170,7 +170,7 @@ class Archer extends Fighter {
       const bullet = new Bullet();
 
       bullet.setPosition(this.x, this.y);
-      bullet.setTarget(this.previousMousemoveEvent.clientX, this.previousMousemoveEvent.clientY);
+      bullet.setDirection(this.getAngleToTarget(this.previousMousemoveEvent.clientX, this.previousMousemoveEvent.clientY));
       bullet.addToGame(this.game);
     });
 
