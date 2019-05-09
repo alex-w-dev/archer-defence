@@ -457,8 +457,8 @@ class Game {
   }
 
   private generateRandomEnemy() {
-    const difficultIndex = 0;
-    const enemyIndex = 0;
+    const difficultIndex = Math.min(2, Math.floor(this.level / 4));
+    const enemyIndex = Math.min(2, Math.floor(this.level / 2));
 
     const enemyDefinition = {...ENEMIES[enemyIndex]};
 
