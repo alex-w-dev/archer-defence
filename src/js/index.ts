@@ -393,11 +393,54 @@ class Floor extends GameObject{
   }
 }
 
+class GameInterface {
+  game: Game;
+  element: HTMLDivElement;
+  enemiesLeftCounterElement: HTMLSpanElement;
+  levelCounterElement: HTMLSpanElement;
+
+  constructor(game: Game) {
+    this.game = game;
+
+    this.element = document.createElement('div');
+    this.enemiesLeftCounterElement = document.createElement('span');
+    this.levelCounterElement = document.createElement('span');
+
+    this.element.style.position = 'absolute';
+    this.element.style.zIndex = '2';
+    this.element.style.left = '5px';
+    this.element.style.top = '5px';
+    this.element.style.color = 'white';
+
+    const enemiesLeftContainer = document.createElement('div');
+    enemiesLeftContainer.innerText = 'Enemies Left: ';
+    enemiesLeftContainer.appendChild(this.enemiesLeftCounterElement);
+    this.element.appendChild(enemiesLeftContainer);
+
+    const levelContainer = document.createElement('div');
+    levelContainer.innerText = 'Level: ';
+    levelContainer.appendChild(this.levelCounterElement);
+    this.element.appendChild(levelContainer);
+
+    this.game.element.appendChild(this.element);
+  }
+
+  drawLevel(level: number) {
+    this.levelCounterElement.innerText = level.toString();
+  }
+  drawEnemiesLeft(enemiesLeft: number) {
+    this.enemiesLeftCounterElement.innerText = enemiesLeft.toString();
+  }
+
+}
+
 class Game {
+  readonly totalEnemies: number = 143;
   level: number = 1;
   score: number = 0;
-  enemiesLeft: number = 500;
+  enemiesLeft: number = this.totalEnemies;
   element: HTMLElement = document.body;
+  interface: GameInterface;
   gameWindowWidth: number;
   gameWindowHeight: number;
 
@@ -424,7 +467,17 @@ class Game {
     this.archer.setPosition(this.gameWindowWidth / 2, this.gameWindowHeight / 2);
     this.archer.addToGame(this);
 
+    this.interface = new GameInterface(this);
+    this.interface.drawLevel(this.level);
+    this.interface.drawEnemiesLeft(this.enemiesLeft);
+
     this.startTicking();
+  }
+
+  public gameWin(): void {
+    alert('Congratulation! You Won!');
+
+    this.destroy();
   }
 
   public gameOver(): void {
@@ -451,17 +504,23 @@ class Game {
   public addScore() {
     ++this.score;
 
-    this.level = Math.max(Math.floor(Math.sqrt(this.score / 1)), 1)
+    this.level = Math.max(Math.floor(Math.sqrt(this.score)), 1);
+
+    this.interface.drawLevel(this.level);
   }
 
   private generateRandomEnemy() {
     const now = Date.now();
-    if (now < this.lastTimeOfEnemyGeneration + 1000 || !this.enemiesLeft--) return;
+
+    if (now < this.lastTimeOfEnemyGeneration + 1000 || !this.enemiesLeft) return;
+
+    this.enemiesLeft--;
+    this.interface.drawEnemiesLeft(this.enemiesLeft);
 
     this.lastTimeOfEnemyGeneration = now;
 
     const difficultIndex = Math.min(2, random(0, Math.floor(this.level / 4)));
-    const enemyIndex = Math.min(2, random(0, Math.floor(this.level / 2)));
+    const enemyIndex = Math.min(2, random(0, Math.min(this.level - 1, 2)));
 
     const enemyDefinition = {...ENEMIES[enemyIndex]};
 
@@ -486,6 +545,10 @@ class Game {
 
   private startTicking() {
     this.tickingInterval = setInterval(() => {
+      if (this.score === this.totalEnemies) {
+        return this.gameWin()
+      }
+
       this.generateRandomEnemy();
 
       const now = Date.now();
