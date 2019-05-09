@@ -422,7 +422,9 @@ class Game {
     this.archer.setPosition(this.gameWindowWidth / 2, this.gameWindowHeight / 2);
     this.archer.addToGame(this);
 
-    this.generateRandomEnemy();
+    for (let i = 0; i < 10; i++) {
+      this.generateRandomEnemy();
+    }
 
     this.startTicking();
   }
@@ -469,7 +471,13 @@ class Game {
         difficultIndex: difficultIndex,
       }
     });
-    enemy.setPosition(500, 0);
+
+    if (random(0, 1)) {
+      enemy.setPosition(random(0, this.gameWindowWidth), random(0, 1) * this.gameWindowHeight);
+    } else {
+      enemy.setPosition(random(0, 1) * this.gameWindowWidth, random(0, this.gameWindowHeight));
+    }
+
     enemy.addToGame(this);
   }
 
@@ -561,4 +569,7 @@ function getFireBallImageBase64() {
 }
 function getArrowImageBase64() {
   return 'iVBORw0KGgoAAAANSUhEUgAAABQAAAAECAYAAACOXx+WAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAADYSURBVChTY/wPBAxA8OzpE4aLF84yeHr7g7gkgWlTehnk5RUZNm9ax8AAMvDatSv/Vy1fBGL+//P7N5j++/cvmP7z98//N29eg9nv3r75v2HdSjB7754d/z99/PB/ycL5/69fv/zfx9Pl/9evn/8zNtSW/7965QLD6vU7GcpLshl+/PjOwMrKBrSXkYGJCYSZGVhYWMAu4eDkZODm5mH48+c3Az+/IFAFA8PXr18YXr9+BVLOYGnpzAD38sePHxhWrljMkJaeC+KSBKorixkkJMQZ/v37xwAA/e15wAGN3fIAAAAASUVORK5CYII=';
+}
+function random(min: number, max: number) {
+  return Math.floor(Math.random() * (max - min + 1) + min);
 }
