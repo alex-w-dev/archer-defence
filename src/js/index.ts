@@ -1,6 +1,7 @@
 interface GameParams {
   gameWindowWidth: number;
   gameWindowHeight: number;
+  element?: HTMLElement;
 }
 
 type IOnTickFunction = (delta: number) => void;
@@ -439,7 +440,7 @@ class Game {
   level: number = 1;
   score: number = 0;
   enemiesLeft: number = this.totalEnemies;
-  element: HTMLElement = document.body;
+  element: HTMLElement;
   interface: GameInterface;
   gameWindowWidth: number;
   gameWindowHeight: number;
@@ -455,8 +456,11 @@ class Game {
   private lastTimeOfEnemyGeneration: number = Date.now();
 
   constructor(gameParams: GameParams) {
+    this.element = gameParams.element || document.body;
     this.element.innerHTML = '';
+    this.element.style.userSelect = this.element.style.msUserSelect = this.element.style.webkitUserSelect = 'none';
     this.element.style.position = 'relative';
+    this.element.style.background = '#d5d2ff';
     this.element.style.width = (this.gameWindowWidth = gameParams.gameWindowWidth) + 'px';
     this.element.style.height = (this.gameWindowHeight = gameParams.gameWindowHeight) + 'px';
     this.floor = new Floor();
@@ -504,7 +508,7 @@ class Game {
   public addScore() {
     ++this.score;
 
-    this.level = Math.max(Math.floor(Math.sqrt(this.score)), 1);
+    this.level = Math.min(Math.max(Math.floor(Math.sqrt(this.score)), 1), 10);
 
     this.interface.drawLevel(this.level);
   }
