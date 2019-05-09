@@ -121,7 +121,7 @@ class DynamicGameObject extends GameObject{
   lookOn(x: number, y: number) {
     const lookAngle = this.getAngleToTarget(x, y) + this.spriteLooks;
 
-    this.element.style.transform = `rotate(${lookAngle}deg)`;
+    this.element.style.transform = 'rotate('+lookAngle+'deg)';
   }
 
   stepTo(x: number, y: number, delta) {
@@ -160,7 +160,7 @@ class Bullet extends DynamicGameObject {
   constructor() {
     super();
 
-    this.element.style.background = `url(data:image/png;base64,${getArrowImageBase64()})`;
+    this.element.style.background = 'url(data:image/png;base64,'+getArrowImageBase64()+')';
     this.spriteLooks = SpriteLooks.Left;
     this.setSize(20, 4);
   }
@@ -210,7 +210,7 @@ class EnemiesFireBall extends EnemiesArrow {
   constructor() {
     super();
 
-    this.element.style.background = `url(data:image/png;base64,${getFireBallImageBase64()})`;
+    this.element.style.background = 'url(data:image/png;base64,'+getFireBallImageBase64()+')';
     this.spriteLooks = SpriteLooks.Left;
     this.setSize(6, 6);
   }
@@ -263,7 +263,7 @@ class Enemy extends Fighter{
   constructor(enemyParams: IEnemyParams) {
     super();
 
-    this.element.style.background = `url(data:image/png;base64,${enemyParams.image})`;
+    this.element.style.background = 'url(data:image/png;base64,'+enemyParams.image+')';
     this.spriteLooks = enemyParams.spriteLooks;
     this.setSize(enemyParams.size.width, enemyParams.size.height);
     this.attackRange = enemyParams.attackRange;
@@ -323,7 +323,9 @@ class Archer extends Fighter {
   constructor() {
     super();
 
-    document.addEventListener('mousemove', (e) => this.previousMousemoveEvent = e);
+    document.addEventListener('mousemove', (e) => {
+      this.previousMousemoveEvent = e;
+    });
     document.addEventListener('mousedown', (e) => {
       this.isMouseDown = true;
     });
@@ -343,7 +345,7 @@ class Archer extends Fighter {
       if (moveDirection !== null) this.moveDirections.delete(moveDirection);
     });
 
-    this.element.style.background = `url(data:image/png;base64,${getArcherImageBase64()})`;
+    this.element.style.background = 'url(data:image/png;base64,'+getArcherImageBase64()+')';
     this.spriteLooks = SpriteLooks.Down;
     this.setSize(25, 22);
   }
@@ -370,7 +372,7 @@ class Archer extends Fighter {
     }
   }
 
-  private getMoveDirection(e: KeyboardEvent): MoveDirections | null {
+  private getMoveDirection(e: KeyboardEvent): MoveDirections {
     if (['s', 'ArrowDown'].includes(e.key)) {
       return MoveDirections.Down;
     } else if (['w', 'ArrowUp'].includes(e.key)) {
@@ -390,7 +392,7 @@ class Floor extends GameObject{
     super();
 
     this.element.style.zIndex = '0';
-    this.element.style.background = `url(data:image/gif;base64,${getGrassImageBase64()})`;
+    this.element.style.background = 'url(data:image/gif;base64,'+getGrassImageBase64()+')';
   }
 }
 
@@ -436,7 +438,7 @@ class GameInterface {
 }
 
 class Game {
-  readonly totalEnemies: number = 143;
+  totalEnemies: number = 143;
   level: number = 1;
   score: number = 0;
   enemiesLeft: number = this.totalEnemies;
@@ -526,17 +528,17 @@ class Game {
     const difficultIndex = Math.min(2, random(0, Math.floor(this.level / 4)));
     const enemyIndex = Math.min(2, random(0, Math.min(this.level - 1, 2)));
 
-    const enemyDefinition = {...ENEMIES[enemyIndex]};
+    const enemyDefinition = Object.assign({}, ENEMIES[enemyIndex]);
 
-    const enemy = new Enemy({
-      ...enemyDefinition,
-      ...{
+    const enemy = new Enemy(Object.assign(
+      enemyDefinition,
+      {
         attackRange: enemyDefinition.attackRanges[difficultIndex],
         attackSpeed: enemyDefinition.attackSpeeds[difficultIndex],
         speed: enemyDefinition.speeds[difficultIndex],
         difficultIndex: difficultIndex,
       }
-    });
+    ));
 
     if (random(0, 1)) {
       enemy.setPosition(random(0, this.gameWindowWidth), random(0, 1) * this.gameWindowHeight);
