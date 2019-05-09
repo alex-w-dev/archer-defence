@@ -125,7 +125,7 @@ class DynamicGameObject extends GameObject{
 
   stepTo(x: number, y: number, delta) {
     this.setMoveDirection(x, y);
-    this.setPosition(this.x + Math.cos(this.moveAngle) * delta * this.speed, this.y + Math.sin(this.moveAngle) * delta * this.speed);
+    this.stepByMoveAngle(delta);
   }
 
   setMoveDirection(x: number, y: number) {
