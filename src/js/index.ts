@@ -31,6 +31,12 @@ enum SpriteLooks {
   'Left' = 180,
   'Up' = 90,
 }
+enum MoveDirections {
+  'Right' = 0,
+  'Down' = 90,
+  'Left' = 180,
+  'Up' = 270,
+}
 
 class GameObject {
   element: HTMLDivElement;
@@ -86,6 +92,7 @@ class GameObject {
 class DynamicGameObject extends GameObject{
   speed: number = 1;
   lastAttackTime: number = Date.now();
+  moveAngle: number;
 
   protected bindOnTick: IOnTickFunction;
 
@@ -111,14 +118,25 @@ class DynamicGameObject extends GameObject{
   onTick(delta) {};
 
   lookOn(x: number, y: number) {
-    const angle = this.getAngleToTarget(x, y) + this.spriteLooks;
+    const lookAngle = this.getAngleToTarget(x, y) + this.spriteLooks;
 
-    this.element.style.transform = `rotate(${angle}deg)`;
+    this.element.style.transform = `rotate(${lookAngle}deg)`;
   }
 
   stepTo(x: number, y: number, delta) {
-    const angle = this.getAngleToTarget(x, y);
-    this.setPosition(this.x + Math.cos(angle) * delta * this.speed, this.y + Math.sin(angle) * delta * this.speed);
+    this.setMoveDirection(x, y);
+    this.setPosition(this.x + Math.cos(this.moveAngle) * delta * this.speed, this.y + Math.sin(this.moveAngle) * delta * this.speed);
+  }
+
+  setMoveDirection(x: number, y: number) {
+    this.moveAngle = this.getAngleToTarget(x, y);
+  }
+
+  stepByMoveAngle(delta: number) {
+    this.setPosition(
+      this.x += Math.cos(this.moveAngle / 180 * Math.PI) * this.speed * delta,
+      this.y += Math.sin(this.moveAngle / 180 * Math.PI) * this.speed * delta,
+    );
   }
 
   protected getAngleToTarget(x: number, y: number): number {
@@ -138,8 +156,6 @@ class DynamicGameObject extends GameObject{
 }
 
 class Bullet extends DynamicGameObject {
-  angle: number;
-
   constructor() {
     super();
 
@@ -148,15 +164,8 @@ class Bullet extends DynamicGameObject {
     this.setSize(20, 4);
   }
 
-  setDirection(angle: number) {
-    this.angle = angle;
-  }
-
   onTick(delta) {
-    this.setPosition(
-      this.x += Math.cos(this.angle / 180 * Math.PI) * this.speed,
-      this.y += Math.sin(this.angle / 180 * Math.PI) * this.speed,
-    );
+    this.stepByMoveAngle(delta);
 
     if (this.x < 0 || this.x > this.game.floor.width || this.y < 0 || this.y > this.game.floor.height) {
       this.destroy();
@@ -239,7 +248,7 @@ class Fighter extends DynamicGameObject{
 
       bullet.setPosition(this.x, this.y);
       bullet.lookOn(x, y);
-      bullet.setDirection(this.getAngleToTarget(x, y));
+      bullet.setMoveDirection(x, y);
       bullet.addToGame(this.game);
 
       this.lastAttackTime = now;
@@ -299,6 +308,7 @@ class Enemy extends Fighter{
 class Archer extends Fighter {
   bullet: typeof Bullet = ArchersBullet;
   attackSpeed: number = 2;
+  moveDirections: Set<MoveDirections> = new Set();
 
   private previousMousemoveEvent: MouseEvent;
   private isMouseDown: boolean = false;
@@ -313,13 +323,25 @@ class Archer extends Fighter {
     document.addEventListener('mouseup', (e) => {
       this.isMouseDown = false;
     });
+    document.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (e.repeat) return;
+
+      const moveDirection = this.getMoveDirection(e);
+      if (moveDirection !== null) this.moveDirections.add(moveDirection);
+    });
+    document.addEventListener('keyup', (e: KeyboardEvent) => {
+      if (e.repeat) return;
+
+      const moveDirection = this.getMoveDirection(e);
+      if (moveDirection !== null) this.moveDirections.delete(moveDirection);
+    });
 
     this.element.style.background = `url(data:image/png;base64,${getArcherImageBase64()})`;
     this.spriteLooks = SpriteLooks.Down;
     this.setSize(25, 22);
   }
 
-  onTick() {
+  onTick(delta) {
     if (this.previousMousemoveEvent) {
       this.lookOn(this.previousMousemoveEvent.clientX, this.previousMousemoveEvent.clientY);
 
@@ -327,12 +349,38 @@ class Archer extends Fighter {
         this.attackTo(this.previousMousemoveEvent.clientX, this.previousMousemoveEvent.clientY);
       }
     }
+
+    if (this.moveDirections.size) {
+      const moveDirections = Array.from(this.moveDirections);
+      if (moveDirections[1] === undefined) moveDirections[1] = moveDirections[0];
+
+      let summ = moveDirections[0] + moveDirections[1];
+      if (Math.abs(moveDirections[0] - moveDirections[1]) > 180)  summ += 360;
+
+      this.moveAngle = summ / 2;
+
+      this.stepByMoveAngle(delta)
+    }
   }
 
   destroy() {
     // super.destroy();
 
     this.game.gameOver();
+  }
+
+  private getMoveDirection(e: KeyboardEvent): MoveDirections | null {
+    if (['s', 'ArrowDown'].includes(e.key)) {
+      return MoveDirections.Down;
+    } else if (['w', 'ArrowUp'].includes(e.key)) {
+      return MoveDirections.Up;
+    } else if (['a', 'ArrowLeft'].includes(e.key)) {
+      return MoveDirections.Left;
+    } else if (['d', 'ArrowRight'].includes(e.key)) {
+      return MoveDirections.Right;
+    }
+
+    return null;
   }
 }
 
@@ -421,7 +469,7 @@ class Game {
         difficultIndex: difficultIndex,
       }
     });
-    enemy.setPosition(0, 0);
+    enemy.setPosition(500, 0);
     enemy.addToGame(this);
   }
 
