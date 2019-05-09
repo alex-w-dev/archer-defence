@@ -201,8 +201,7 @@ class EnemiesArrow extends Bullet {
     super.onTick(delta);
 
     if (detectCollision(this, this.game.archer)) {
-      this.destroy();
-      this.game.archer.destroy();
+      this.game.gameOver();
     }
   }
 }
@@ -270,6 +269,13 @@ class Enemy extends Fighter{
     this.attackSpeed = enemyParams.attackSpeed;
     this.speed = enemyParams.speed;
     this.bullet = enemyParams.bullet;
+
+    if (enemyParams.difficultIndex === 1) {
+      this.element.style.boxShadow = '0px 0px 10px -1px blue';
+    }
+    if (enemyParams.difficultIndex === 2) {
+      this.element.style.boxShadow = '0px 0px 10px -1px red';
+    }
   }
 
 
@@ -363,12 +369,6 @@ class Archer extends Fighter {
     }
   }
 
-  destroy() {
-    // super.destroy();
-
-    this.game.gameOver();
-  }
-
   private getMoveDirection(e: KeyboardEvent): MoveDirections | null {
     if (['s', 'ArrowDown'].includes(e.key)) {
       return MoveDirections.Down;
@@ -396,6 +396,7 @@ class Floor extends GameObject{
 class Game {
   level: number = 1;
   score: number = 0;
+  enemiesLeft: number = 500;
   element: HTMLElement = document.body;
   gameWindowWidth: number;
   gameWindowHeight: number;
@@ -408,6 +409,7 @@ class Game {
   private tickSubscriptions: Set<IOnTickFunction> = new Set<IOnTickFunction>();
   private prevTickTime: number = Date.now();
   private tickingInterval: any;
+  private lastTimeOfEnemyGeneration: number = Date.now();
 
   constructor(gameParams: GameParams) {
     this.element.innerHTML = '';
@@ -421,10 +423,6 @@ class Game {
     this.archer = new Archer();
     this.archer.setPosition(this.gameWindowWidth / 2, this.gameWindowHeight / 2);
     this.archer.addToGame(this);
-
-    for (let i = 0; i < 10; i++) {
-      this.generateRandomEnemy();
-    }
 
     this.startTicking();
   }
@@ -453,12 +451,17 @@ class Game {
   public addScore() {
     ++this.score;
 
-    this.level = Math.max(Math.ceil(Math.sqrt(this.score / 5)), 1)
+    this.level = Math.max(Math.floor(Math.sqrt(this.score / 1)), 1)
   }
 
   private generateRandomEnemy() {
-    const difficultIndex = Math.min(2, Math.floor(this.level / 4));
-    const enemyIndex = Math.min(2, Math.floor(this.level / 2));
+    const now = Date.now();
+    if (now < this.lastTimeOfEnemyGeneration + 1000 || !this.enemiesLeft--) return;
+
+    this.lastTimeOfEnemyGeneration = now;
+
+    const difficultIndex = Math.min(2, random(0, Math.floor(this.level / 4)));
+    const enemyIndex = Math.min(2, random(0, Math.floor(this.level / 2)));
 
     const enemyDefinition = {...ENEMIES[enemyIndex]};
 
@@ -483,6 +486,8 @@ class Game {
 
   private startTicking() {
     this.tickingInterval = setInterval(() => {
+      this.generateRandomEnemy();
+
       const now = Date.now();
       const delta = now - this.prevTickTime;
       this.tickSubscriptions.forEach(cb => {
