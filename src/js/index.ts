@@ -48,7 +48,7 @@ class GameObject {
   y: number;
   spriteLooks: SpriteLooks;
 
-  protected destroyed: boolean = false;
+  destroyed: boolean = false;
 
   constructor() {
     this.init();
@@ -103,7 +103,7 @@ class DynamicGameObject extends GameObject{
   lastAttackTime: number;
   moveAngle: number;
 
-  protected bindOnTick: IOnTickFunction;
+  bindOnTick: IOnTickFunction;
 
   init() {
     callSuperMethod(this, 'init', GameObject);
@@ -151,7 +151,7 @@ class DynamicGameObject extends GameObject{
     );
   }
 
-  protected getAngleToTarget(x: number, y: number): number {
+  getAngleToTarget(x: number, y: number): number {
     const diffX = this.x - x;
     const diffY = this.y - y;
     let angle = Math.atan(diffY / diffX) * 180 / Math.PI;
@@ -199,9 +199,10 @@ class ArchersBullet extends Bullet {
   }
 
   checkEnemiesCollision() {
+    const $this = this;
     this.game.enemies.forEach(enemy => {
-      if (detectCollision(this, enemy)) {
-        this.destroy();
+      if (detectCollision($this, enemy)) {
+        $this.destroy();
         enemy.destroy();
       }
     });
@@ -341,8 +342,8 @@ class Archer extends Fighter {
   attackSpeed: number;
   moveDirections: Set<MoveDirections>;
 
-  private previousMousemoveEvent: MouseEvent;
-  private isMouseDown: boolean = false;
+  previousMousemoveEvent: MouseEvent;
+  isMouseDown: boolean = false;
 
   init() {
     callSuperMethod(this, 'init', Fighter);
@@ -359,26 +360,28 @@ class Archer extends Fighter {
   addToGame(game: Game) {
     callSuperMethod(this, 'addToGame', Fighter, game);
 
+    const $this = this;
+
     this.game.window.addEventListener('mousemove', (e) => {
-      this.previousMousemoveEvent = e;
+      $this.previousMousemoveEvent = e;
     });
     this.game.window.addEventListener('mousedown', (e) => {
-      this.isMouseDown = true;
+      $this.isMouseDown = true;
     });
     this.game.window.addEventListener('mouseup', (e) => {
-      this.isMouseDown = false;
+      $this.isMouseDown = false;
     });
     this.game.window.addEventListener('keydown', (e: KeyboardEvent) => {
       if (e.repeat) return;
 
-      const moveDirection = this.getMoveDirection(e);
-      if (moveDirection !== null) this.moveDirections.add(moveDirection);
+      const moveDirection = $this.getMoveDirection(e);
+      if (moveDirection !== null) $this.moveDirections.add(moveDirection);
     });
     this.game.window.addEventListener('keyup', (e: KeyboardEvent) => {
       if (e.repeat) return;
 
-      const moveDirection = this.getMoveDirection(e);
-      if (moveDirection !== null) this.moveDirections.delete(moveDirection);
+      const moveDirection = $this.getMoveDirection(e);
+      if (moveDirection !== null) $this.moveDirections.delete(moveDirection);
     });
   }
 
@@ -404,7 +407,7 @@ class Archer extends Fighter {
     }
   }
 
-  private getMoveDirection(e: KeyboardEvent): MoveDirections {
+  getMoveDirection(e: KeyboardEvent): MoveDirections {
     if (['s', 'ArrowDown'].includes(e.key)) {
       return MoveDirections.Down;
     } else if (['w', 'ArrowUp'].includes(e.key)) {
@@ -485,10 +488,10 @@ class Game {
   floor: Floor;
   isGamePlay: boolean = true;
 
-  private tickSubscriptions: Set<IOnTickFunction> = new Set<IOnTickFunction>();
-  private prevTickTime: number = Date.now();
-  private tickingInterval: any;
-  private lastTimeOfEnemyGeneration: number = Date.now();
+  tickSubscriptions: Set<IOnTickFunction> = new Set<IOnTickFunction>();
+  prevTickTime: number = Date.now();
+  tickingInterval: any;
+  lastTimeOfEnemyGeneration: number = Date.now();
 
   constructor(gameParams: GameParams) {
     this.window = gameParams.window || window;
@@ -514,34 +517,34 @@ class Game {
     this.startTicking();
   }
 
-  public gameWin(): void {
+  gameWin(): void {
     this.window.alert('Congratulation! You Won!');
 
     this.destroy();
   }
 
-  public gameOver(): void {
+  gameOver(): void {
     this.window.alert('Game Over');
 
     this.destroy();
   }
 
-  public destroy(): void {
+  destroy(): void {
     this.isGamePlay = false;
 
     clearInterval(this.tickingInterval);
     this.tickingInterval = null;
   }
 
-  public tickSubscribe(cb: IOnTickFunction): void {
+  tickSubscribe(cb: IOnTickFunction): void {
     this.tickSubscriptions.add(cb);
   }
 
-  public tickUnsubscribe(cb: IOnTickFunction): void {
+  tickUnsubscribe(cb: IOnTickFunction): void {
     this.tickSubscriptions.delete(cb);
   }
 
-  public addScore() {
+  addScore() {
     ++this.score;
 
     this.level = Math.min(Math.max(Math.floor(Math.sqrt(this.score)), 1), 10);
@@ -549,7 +552,7 @@ class Game {
     this.interface.drawLevel(this.level);
   }
 
-  private generateRandomEnemy() {
+  generateRandomEnemy() {
     const now = Date.now();
 
     if (now < this.lastTimeOfEnemyGeneration + 1000 || !this.enemiesLeft) return;
@@ -584,22 +587,23 @@ class Game {
     enemy.addToGame(this);
   }
 
-  private startTicking() {
+  startTicking() {
+    const $this = this;
     this.tickingInterval = setInterval(() => {
-      if (this.score === this.totalEnemies) {
-        return this.gameWin()
+      if ($this.score > 0 && $this.score === this.totalEnemies) {
+        return $this.gameWin()
       }
 
-      this.generateRandomEnemy();
+      $this.generateRandomEnemy();
 
       const now = Date.now();
-      const delta = now - this.prevTickTime;
-      this.tickSubscriptions.forEach(cb => {
-        if (this.isGamePlay) {
+      const delta = now - $this.prevTickTime;
+      $this.tickSubscriptions.forEach(cb => {
+        if ($this.isGamePlay) {
           cb(delta / (1000 / 30))
         }
       });
-      this.prevTickTime = now;
+      $this.prevTickTime = now;
     }, 30);
   }
 }
