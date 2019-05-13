@@ -408,13 +408,13 @@ class Archer extends Fighter {
   }
 
   getMoveDirection(e: KeyboardEvent): MoveDirections {
-    if (['s', 'ArrowDown'].includes(e.key)) {
+    if (['s', 'ы', 'ArrowDown'].includes(e.key)) {
       return MoveDirections.Down;
-    } else if (['w', 'ArrowUp'].includes(e.key)) {
+    } else if (['w', 'ц', 'ArrowUp'].includes(e.key)) {
       return MoveDirections.Up;
-    } else if (['a', 'ArrowLeft'].includes(e.key)) {
+    } else if (['a', 'ф', 'ArrowLeft'].includes(e.key)) {
       return MoveDirections.Left;
-    } else if (['d', 'ArrowRight'].includes(e.key)) {
+    } else if (['d', 'в', 'ArrowRight'].includes(e.key)) {
       return MoveDirections.Right;
     }
 
@@ -505,8 +505,7 @@ class Game {
     this.element.style.width = this.gameWindowWidth + 'px';
     this.element.style.height = this.gameWindowHeight + 'px';
     this.element.style.margin = '0';
-    this.element.style.left = 'calc(50% - '+ this.gameWindowWidth / 2 + 'px)';
-    this.element.style.top = 'calc(50% - '+ this.gameWindowHeight / 2 + 'px)';
+    this.element.style.overflow = 'hidden';
     this.floor = new Floor();
     this.floor.setPosition(this.gameWindowWidth / 2, this.gameWindowHeight / 2);
     this.floor.setSize(this.gameWindowWidth, this.gameWindowHeight);
@@ -653,7 +652,7 @@ const ENEMIES: Array<IEnemyDefinition> = [
 ];
 
 document.getElementById('play-btn').onclick = (e) => {
-  const gameWindow = window.open("about:blank","popupwindow", "width=650,height=650,left=200,top=5,scrollbars,toolbar=0,resizable");
+  const gameWindow = window.open("about:blank","popupwindow", "width=600,height=600,left=200,top=5,scrollbars,toolbar=0,resizable");
 
   new Game({
     gameWindowWidth: 600,
