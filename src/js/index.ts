@@ -1,7 +1,7 @@
 interface GameParams {
   gameWindowWidth: number;
   gameWindowHeight: number;
-  element?: HTMLElement;
+  window?: Window;
 }
 
 type IOnTickFunction = (delta: number) => void;
@@ -46,12 +46,17 @@ class GameObject {
   height: number;
   x: number;
   y: number;
-  spriteLooks: SpriteLooks = SpriteLooks.Right;
+  spriteLooks: SpriteLooks;
 
   protected destroyed: boolean = false;
 
   constructor() {
+    this.init();
+  }
+
+  init() {
     this.element = document.createElement('div');
+    this.spriteLooks = SpriteLooks.Right;
     this.element.style.transformOrigin = '50% 50%';
     this.element.style.position = 'absolute';
     this.setSize(0, 0);
@@ -69,7 +74,10 @@ class GameObject {
 
   addToGame(game: Game) {
     this.game = game;
-    this.game.element.appendChild(this.element);
+
+    this.game.element.appendChild(
+      this.element
+    );
   }
 
   setSize(width: number, height: number) {
@@ -91,18 +99,21 @@ class GameObject {
 }
 
 class DynamicGameObject extends GameObject{
-  speed: number = 1;
-  lastAttackTime: number = Date.now();
+  speed: number;
+  lastAttackTime: number;
   moveAngle: number;
 
   protected bindOnTick: IOnTickFunction;
 
-  constructor() {
-    super();
+  init() {
+    callSuperMethod(this, 'init', GameObject);
+
+    this.speed = 1;
+    this.lastAttackTime = Date.now();
   }
 
   destroy() {
-    super.destroy();
+    callSuperMethod(this, 'destroy', GameObject);
 
     if (this.bindOnTick) {
       this.game.tickUnsubscribe(this.bindOnTick);
@@ -110,7 +121,7 @@ class DynamicGameObject extends GameObject{
   }
 
   addToGame(game: Game) {
-    super.addToGame(game);
+    callSuperMethod(this, 'addToGame', GameObject, game);
 
     this.bindOnTick = this.onTick.bind(this);
     this.game.tickSubscribe(this.bindOnTick);
@@ -157,8 +168,8 @@ class DynamicGameObject extends GameObject{
 }
 
 class Bullet extends DynamicGameObject {
-  constructor() {
-    super();
+  init() {
+    callSuperMethod(this, 'init', DynamicGameObject);
 
     this.element.style.background = 'url(data:image/png;base64,'+getArrowImageBase64()+')';
     this.spriteLooks = SpriteLooks.Left;
@@ -175,14 +186,14 @@ class Bullet extends DynamicGameObject {
 }
 
 class ArchersBullet extends Bullet {
-  constructor() {
-    super();
+  init() {
+    callSuperMethod(this, 'init', Bullet);
 
     this.speed = 3;
   }
 
   onTick(delta) {
-    super.onTick(delta);
+    callSuperMethod(this, 'onTick', Bullet, delta);
 
     this.checkEnemiesCollision();
   }
@@ -199,7 +210,7 @@ class ArchersBullet extends Bullet {
 
 class EnemiesArrow extends Bullet {
   onTick(delta) {
-    super.onTick(delta);
+    callSuperMethod(this, 'onTick', Bullet, delta);
 
     if (detectCollision(this, this.game.archer)) {
       this.game.gameOver();
@@ -207,27 +218,29 @@ class EnemiesArrow extends Bullet {
   }
 }
 class EnemiesFireBall extends EnemiesArrow {
-  constructor() {
-    super();
+  init() {
+    callSuperMethod(this, 'init', EnemiesArrow);
 
     this.element.style.background = 'url(data:image/png;base64,'+getFireBallImageBase64()+')';
     this.spriteLooks = SpriteLooks.Left;
     this.setSize(6, 6);
   }
+
 }
 
 class SkeletonsSword extends EnemiesArrow {
-  tickTime: number = 5;
+  tickTime: number;
 
-  constructor() {
-    super();
+  init() {
+    callSuperMethod(this, 'init', EnemiesArrow);
 
-    this.speed = 3;
+    this.speed = 10;
+    this.tickTime = 5;
   }
 
 
   onTick(delta) {
-    super.onTick(delta);
+    callSuperMethod(this, 'onTick', EnemiesArrow, delta);
 
     if(!--this.tickTime) {
       this.destroy();
@@ -236,8 +249,14 @@ class SkeletonsSword extends EnemiesArrow {
 }
 
 class Fighter extends DynamicGameObject{
-  attackSpeed: number = 1;
+  attackSpeed: number;
   bullet: typeof Bullet;
+
+  init() {
+    callSuperMethod(this, 'init', DynamicGameObject);
+
+    this.attackSpeed = 1;
+  }
 
   attackTo(x: number, y: number) {
     this.lookOn(x, y);
@@ -257,12 +276,17 @@ class Fighter extends DynamicGameObject{
 }
 
 class Enemy extends Fighter{
-  attackRange: number = 20;
-  bullet: typeof Bullet = EnemiesArrow;
+  attackRange: number;
+  bullet: typeof Bullet;
 
-  constructor(enemyParams: IEnemyParams) {
-    super();
+  init() {
+    callSuperMethod(this, 'init', Fighter);
 
+    this.attackRange = 20;
+    this.bullet = EnemiesArrow;
+  }
+
+  applyParams(enemyParams: IEnemyParams) {
     this.element.style.background = 'url(data:image/png;base64,'+enemyParams.image+')';
     this.spriteLooks = enemyParams.spriteLooks;
     this.setSize(enemyParams.size.width, enemyParams.size.height);
@@ -281,7 +305,7 @@ class Enemy extends Fighter{
 
 
   destroy() {
-    super.destroy();
+    callSuperMethod(this, 'destroy', Fighter);
 
     if (this.game) {
       this.game.addScore();
@@ -290,7 +314,7 @@ class Enemy extends Fighter{
   }
 
   addToGame(game: Game) {
-    super.addToGame(game);
+    callSuperMethod(this, 'addToGame', Fighter, game);
 
     this.game.enemies.add(this);
   }
@@ -313,41 +337,49 @@ class Enemy extends Fighter{
 }
 
 class Archer extends Fighter {
-  bullet: typeof Bullet = ArchersBullet;
-  attackSpeed: number = 2;
-  moveDirections: Set<MoveDirections> = new Set();
+  bullet: typeof Bullet;
+  attackSpeed: number;
+  moveDirections: Set<MoveDirections>;
 
   private previousMousemoveEvent: MouseEvent;
   private isMouseDown: boolean = false;
 
-  constructor() {
-    super();
+  init() {
+    callSuperMethod(this, 'init', Fighter);
 
-    document.addEventListener('mousemove', (e) => {
+    this.bullet = ArchersBullet;
+    this.attackSpeed = 2;
+    this.moveDirections = new Set();
+
+    this.element.style.background = 'url(data:image/png;base64,'+getArcherImageBase64()+')';
+    this.spriteLooks = SpriteLooks.Down;
+    this.setSize(25, 22);
+  }
+
+  addToGame(game: Game) {
+    callSuperMethod(this, 'addToGame', Fighter, game);
+
+    this.game.window.addEventListener('mousemove', (e) => {
       this.previousMousemoveEvent = e;
     });
-    document.addEventListener('mousedown', (e) => {
+    this.game.window.addEventListener('mousedown', (e) => {
       this.isMouseDown = true;
     });
-    document.addEventListener('mouseup', (e) => {
+    this.game.window.addEventListener('mouseup', (e) => {
       this.isMouseDown = false;
     });
-    document.addEventListener('keydown', (e: KeyboardEvent) => {
+    this.game.window.addEventListener('keydown', (e: KeyboardEvent) => {
       if (e.repeat) return;
 
       const moveDirection = this.getMoveDirection(e);
       if (moveDirection !== null) this.moveDirections.add(moveDirection);
     });
-    document.addEventListener('keyup', (e: KeyboardEvent) => {
+    this.game.window.addEventListener('keyup', (e: KeyboardEvent) => {
       if (e.repeat) return;
 
       const moveDirection = this.getMoveDirection(e);
       if (moveDirection !== null) this.moveDirections.delete(moveDirection);
     });
-
-    this.element.style.background = 'url(data:image/png;base64,'+getArcherImageBase64()+')';
-    this.spriteLooks = SpriteLooks.Down;
-    this.setSize(25, 22);
   }
 
   onTick(delta) {
@@ -388,8 +420,8 @@ class Archer extends Fighter {
 }
 
 class Floor extends GameObject{
-  constructor() {
-    super();
+  init() {
+    callSuperMethod(this, 'init', GameObject);
 
     this.element.style.zIndex = '0';
     this.element.style.background = 'url(data:image/gif;base64,'+getGrassImageBase64()+')';
@@ -443,6 +475,7 @@ class Game {
   score: number = 0;
   enemiesLeft: number = this.totalEnemies;
   element: HTMLElement;
+  window: Window;
   interface: GameInterface;
   gameWindowWidth: number;
   gameWindowHeight: number;
@@ -458,7 +491,8 @@ class Game {
   private lastTimeOfEnemyGeneration: number = Date.now();
 
   constructor(gameParams: GameParams) {
-    this.element = gameParams.element || document.body;
+    this.window = gameParams.window || window;
+    this.element = this.window.document.body;
     this.element.innerHTML = '';
     this.element.style.userSelect = this.element.style.msUserSelect = this.element.style.webkitUserSelect = 'none';
     this.element.style.position = 'relative';
@@ -481,13 +515,13 @@ class Game {
   }
 
   public gameWin(): void {
-    alert('Congratulation! You Won!');
+    this.window.alert('Congratulation! You Won!');
 
     this.destroy();
   }
 
   public gameOver(): void {
-    alert('Game Over');
+    this.window.alert('Game Over');
 
     this.destroy();
   }
@@ -530,7 +564,8 @@ class Game {
 
     const enemyDefinition = Object.assign({}, ENEMIES[enemyIndex]);
 
-    const enemy = new Enemy(Object.assign(
+    const enemy = new Enemy();
+    enemy.applyParams(Object.assign(
       enemyDefinition,
       {
         attackRange: enemyDefinition.attackRanges[difficultIndex],
@@ -608,10 +643,21 @@ const ENEMIES: Array<IEnemyDefinition> = [
   },
 ];
 
-new Game({
-  gameWindowWidth: 500,
-  gameWindowHeight: 500,
-});
+document.getElementById('play-btn').onclick = (e) => {
+  const gameWindow = window.open("about:blank","popupwindow", "width=800,height=500,left=200,top=5,scrollbars,toolbar=0,resizable");
+
+  new Game({
+    gameWindowWidth: 600,
+    gameWindowHeight: 600,
+    window: gameWindow,
+  });
+};
+
+// THIS IS HACK TO IGNORE JsFiddle bug "typescript _super is not defined"
+function callSuperMethod(thisArg, methodName, Super, ...args) {
+  const $super = new Super();
+  $super[methodName].apply(thisArg, args);
+}
 
 function detectCollision(gameObject1: GameObject, gameObject2: GameObject): boolean {
   const radius1 = Math.min(gameObject1.width, gameObject1.height) / 2;
