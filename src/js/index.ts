@@ -590,7 +590,7 @@ class Game {
   startTicking() {
     const $this = this;
     this.tickingInterval = setInterval(() => {
-      if ($this.score > 0 && $this.score === this.totalEnemies) {
+      if (!$this.enemiesLeft && !$this.enemies.size) {
         return $this.gameWin()
       }
 
@@ -648,7 +648,7 @@ const ENEMIES: Array<IEnemyDefinition> = [
 ];
 
 document.getElementById('play-btn').onclick = (e) => {
-  const gameWindow = window.open("about:blank","popupwindow", "width=800,height=500,left=200,top=5,scrollbars,toolbar=0,resizable");
+  const gameWindow = window.open("about:blank","popupwindow", "width=650,height=650,left=200,top=5,scrollbars,toolbar=0,resizable");
 
   new Game({
     gameWindowWidth: 600,
