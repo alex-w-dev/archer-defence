@@ -494,14 +494,19 @@ class Game {
   lastTimeOfEnemyGeneration: number = Date.now();
 
   constructor(gameParams: GameParams) {
+    this.gameWindowWidth = gameParams.gameWindowWidth;
+    this.gameWindowHeight = gameParams.gameWindowHeight;
     this.window = gameParams.window || window;
     this.element = this.window.document.body;
     this.element.innerHTML = '';
     this.element.style.userSelect = this.element.style.msUserSelect = this.element.style.webkitUserSelect = 'none';
     this.element.style.position = 'relative';
     this.element.style.background = '#d5d2ff';
-    this.element.style.width = (this.gameWindowWidth = gameParams.gameWindowWidth) + 'px';
-    this.element.style.height = (this.gameWindowHeight = gameParams.gameWindowHeight) + 'px';
+    this.element.style.width = this.gameWindowWidth + 'px';
+    this.element.style.height = this.gameWindowHeight + 'px';
+    this.element.style.margin = '0';
+    this.element.style.left = 'calc(50% - '+ this.gameWindowWidth / 2 + 'px)';
+    this.element.style.top = 'calc(50% - '+ this.gameWindowHeight / 2 + 'px)';
     this.floor = new Floor();
     this.floor.setPosition(this.gameWindowWidth / 2, this.gameWindowHeight / 2);
     this.floor.setSize(this.gameWindowWidth, this.gameWindowHeight);
